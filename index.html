@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>框架套版工具</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="./assets/css/styles.css">
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+        <path d="M3 9h18M9 21V9"></path>
+      </svg>
+    </div>
+    <h1>框架套版工具</h1>
+    <p>&#169; 2026 SV</p>
+  </header>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="card">
+        <div class="card-header"><h2>&#9312; 邊框圖片</h2></div>
+        <div class="card-body">
+          <button class="upload-btn" onclick="document.getElementById('frame-input').click()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            上傳邊框
+          </button>
+          <input type="file" id="frame-input" accept="image/*" hidden onchange="loadFrame(this)">
+          <div class="status-row" id="frame-status" style="display: none;">
+            <span class="badge badge-green">&#10003;</span>
+            <span class="file-name" id="frame-name"></span>
+            <button class="remove-btn" onclick="removeFrame()" title="移除">&#10005;</button>
+          </div>
+          <div id="custom-size-area">
+            <div class="sep size-sep-line"></div>
+            <div class="small-muted">自訂圖面尺寸（最大 1600px）</div>
+            <div class="size-row">
+              <input type="number" class="size-input" id="cw" value="800" min="1" max="1600">
+              <span class="size-sep">&#215;</span>
+              <input type="number" class="size-input" id="ch" value="800" min="1" max="1600">
+              <span class="size-unit">px</span>
+              <button class="size-apply-btn" onclick="applyCustomSize()">套用</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header collapsible" id="color-header" onclick="toggleCollapse('color-header', 'color-body')">
+          <h2>&#9313; 背景顏色</h2>
+          <span class="collapse-icon">&#9660;</span>
+        </div>
+        <div class="card-body" id="color-body">
+          <div class="preset-row">
+            <div class="preset-swatch" id="sw-black" style="background: #000000;" onclick="selectPreset('black', '#000000')"></div>
+            <div class="preset-swatch active" id="sw-white" style="background: #ffffff;" onclick="selectPreset('white', '#ffffff')"></div>
+            <div class="preset-swatch transparent-swatch" id="sw-transparent" onclick="selectPreset('transparent', 'transparent')"></div>
+          </div>
+          <div class="sep section-gap"></div>
+          <div class="hsb-panel">
+            <div class="hsb-preview-row">
+              <div class="hsb-preview" id="hsb-preview" style="background: #ffffff;"></div>
+              <div class="hsb-hex" id="hsb-hex">#FFFFFF</div>
+            </div>
+            <div class="slider-row">
+              <div class="slider-label">色相 H <span id="h-val">0&#176;</span></div>
+              <input type="range" id="hue-slider" min="0" max="360" value="0" step="1" oninput="updateHSB()">
+            </div>
+            <div class="slider-row">
+              <div class="slider-label">飽和度 S <span id="s-val">0%</span></div>
+              <input type="range" id="sat-slider" min="0" max="100" value="0" step="1" oninput="updateHSB()">
+            </div>
+            <div class="slider-row">
+              <div class="slider-label">明度 B <span id="b-val">100%</span></div>
+              <input type="range" id="bri-slider" min="0" max="100" value="100" step="1" oninput="updateHSB()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>&#9314; 底圖</h2></div>
+        <div class="card-body">
+          <button class="upload-btn" id="bg-upload-btn" onclick="document.getElementById('bg-input').click()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span id="bg-upload-label">上傳底圖</span>
+          </button>
+          <input type="file" id="bg-input" accept="image/*" hidden onchange="addBgImage(this)">
+          <div class="layer-list" id="layer-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>&#9315; 調整底圖</h2></div>
+        <div class="card-body">
+          <div id="no-select-hint" class="no-select-hint" style="display: none;">請先在圖層列表或預覽中選取底圖</div>
+          <div id="adjust-controls">
+            <div class="slider-row">
+              <div class="slider-label">縮放 <span id="scale-val">100%</span></div>
+              <input type="range" id="scale-slider" min="30" max="300" value="100" step="1" oninput="updateTransform()">
+            </div>
+            <div class="sep"></div>
+            <div class="slider-row">
+              <div class="slider-label">水平位移 X <span id="x-val">0px</span></div>
+              <input type="range" id="x-slider" min="-500" max="500" value="0" step="1" oninput="updateTransform()">
+            </div>
+            <div class="slider-row">
+              <div class="slider-label">垂直位移 Y <span id="y-val">0px</span></div>
+              <input type="range" id="y-slider" min="-500" max="500" value="0" step="1" oninput="updateTransform()">
+            </div>
+            <div class="sep"></div>
+            <div class="slider-row">
+              <div class="slider-label">旋轉 <span id="rot-val">0&#176;</span></div>
+              <input type="range" id="rot-slider" min="-180" max="180" value="0" step="1" oninput="updateTransform()">
+            </div>
+            <div class="rot-btns">
+              <button class="rot-btn" onclick="rotateBy(-90)">&#8634; 90&#176;</button>
+              <button class="rot-btn" onclick="rotateBy(90)">&#8635; 90&#176;</button>
+              <button class="rot-btn" onclick="resetRotation()">重設</button>
+            </div>
+            <p class="hint">&#128161; 點擊預覽圖片選取，拖曳調整位置</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="canvas-label">預覽區 — 點擊圖片選取，拖曳移動，滑桿旋轉</div>
+      <div id="preview-container">
+        <div class="empty-state" id="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+            <path d="M3 9h18M9 21V9"></path>
+          </svg>
+          上傳邊框，或自訂圖面尺寸開始
+        </div>
+        <div id="color-layer"></div>
+        <div id="select-outline"></div>
+        <div id="text-layers-host"></div>
+        <img id="frame-layer" src="" alt="" style="display: none;">
+      </div>
+      <canvas id="canvas-hidden"></canvas>
+    </div>
+
+    <div class="panel-right">
+      <div class="card">
+        <div class="card-header"><h2>&#9316; 文字</h2></div>
+        <div class="card-body">
+          <textarea class="text-input" id="text-input" placeholder="輸入文字內容..." rows="3"></textarea>
+          <div class="sep"></div>
+          <div class="slider-label section-title">字型</div>
+          <input type="text" class="font-search" id="font-search" placeholder="搜尋字型...">
+          <select class="font-select" id="font-select" size="5">
+            <option value="Noto Sans TC">Noto Sans TC（預設）</option>
+            <option value="serif">Serif</option>
+            <option value="sans-serif">Sans-serif</option>
+            <option value="monospace">Monospace</option>
+            <option value="cursive">Cursive</option>
+          </select>
+          <div id="font-loading" class="font-loading" style="display: none;">&#8987; 載入系統字型中...</div>
+          <div class="sep"></div>
+          <div class="slider-row">
+            <div class="slider-label">字體大小 <span id="font-size-val">48px</span></div>
+            <input type="range" id="font-size-slider" min="8" max="300" value="48" step="1" oninput="updateTextSize()">
+          </div>
+          <div class="sep"></div>
+          <div class="slider-label section-title">文字顏色</div>
+          <div class="text-color-row">
+            <div class="text-color-swatch" id="text-color-swatch" style="background: #000000;">
+              <input type="color" id="text-color-picker" value="#000000" oninput="updateTextColor(this.value)">
+            </div>
+            <div class="text-color-hex" id="text-color-hex">#000000</div>
+          </div>
+          <div class="sep"></div>
+          <div class="slider-label section-title">對齊方式</div>
+          <div class="align-btns">
+            <button class="align-btn active" id="align-left" onclick="setTextAlign('left')" title="置左">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="15" y2="12"></line>
+                <line x1="3" y1="18" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <button class="align-btn" id="align-center" onclick="setTextAlign('center')" title="置中">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="6" y1="12" x2="18" y2="12"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+              </svg>
+            </button>
+            <button class="align-btn" id="align-right" onclick="setTextAlign('right')" title="置右">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="9" y1="12" x2="21" y2="12"></line>
+                <line x1="6" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="sep"></div>
+          <div class="slider-row">
+            <div class="slider-label">文字間距 <span id="letter-spacing-val">0px</span></div>
+            <input type="range" id="letter-spacing-slider" min="-10" max="60" value="0" step="1" oninput="updateLetterSpacing()">
+          </div>
+          <div class="slider-row">
+            <div class="slider-label">行距 <span id="line-height-val">1.25</span></div>
+            <input type="range" id="line-height-slider" min="0.8" max="4" value="1.25" step="0.05" oninput="updateLineHeight()">
+          </div>
+          <button class="add-text-btn" onclick="addTextLayer()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            新增文字圖層
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>&#9317; 物件對齊</h2></div>
+        <div class="card-body">
+          <div id="align-mode-hint" class="align-mode-hint">請先選取物件</div>
+          <div class="align-panel-btns">
+            <button class="align-panel-btn" id="apb-left" onclick="alignObjects('left')" title="靠左對齊">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="5" width="8" height="5" rx="1"></rect>
+                <rect x="3" y="14" width="13" height="5" rx="1"></rect>
+                <line x1="3" y1="2" x2="3" y2="22"></line>
+              </svg>
+              <span>靠左</span>
+            </button>
+            <button class="align-panel-btn" id="apb-hcenter" onclick="alignObjects('hcenter')" title="水平置中">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="7" y="5" width="10" height="5" rx="1"></rect>
+                <rect x="4" y="14" width="16" height="5" rx="1"></rect>
+                <line x1="12" y1="2" x2="12" y2="22"></line>
+              </svg>
+              <span>水平中</span>
+            </button>
+            <button class="align-panel-btn" id="apb-right" onclick="alignObjects('right')" title="靠右對齊">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="13" y="5" width="8" height="5" rx="1"></rect>
+                <rect x="8" y="14" width="13" height="5" rx="1"></rect>
+                <line x1="21" y1="2" x2="21" y2="22"></line>
+              </svg>
+              <span>靠右</span>
+            </button>
+            <button class="align-panel-btn" id="apb-top" onclick="alignObjects('top')" title="靠上對齊">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="3" width="5" height="8" rx="1"></rect>
+                <rect x="14" y="3" width="5" height="13" rx="1"></rect>
+                <line x1="2" y1="3" x2="22" y2="3"></line>
+              </svg>
+              <span>靠上</span>
+            </button>
+            <button class="align-panel-btn" id="apb-vcenter" onclick="alignObjects('vcenter')" title="垂直置中">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="7" width="5" height="10" rx="1"></rect>
+                <rect x="14" y="4" width="5" height="16" rx="1"></rect>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+              </svg>
+              <span>垂直中</span>
+            </button>
+            <button class="align-panel-btn" id="apb-bottom" onclick="alignObjects('bottom')" title="靠下對齊">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="13" width="5" height="8" rx="1"></rect>
+                <rect x="14" y="8" width="5" height="13" rx="1"></rect>
+                <line x1="2" y1="21" x2="22" y2="21"></line>
+              </svg>
+              <span>靠下</span>
+            </button>
+          </div>
+          <p class="hint align-tip">&#8679; Shift+點擊 多選物件</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>&#9318; 輸出</h2></div>
+        <div class="card-body">
+          <div class="format-row">
+            <button class="fmt-btn active" id="fmt-png" onclick="setFormat('png')">PNG</button>
+            <button class="fmt-btn" id="fmt-jpg" onclick="setFormat('jpg')">JPG</button>
+          </div>
+          <div class="fmt-note" id="fmt-note">&#9888; 含透明背景，已鎖定為 PNG</div>
+          <button class="export-btn" id="export-btn" onclick="openExportModal()" disabled>匯出圖片</button>
+          <p class="hint" id="export-hint">輸出尺寸與邊框相同</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="export-modal">
+    <div class="modal-box">
+      <div class="modal-title">匯出圖片</div>
+      <div class="modal-field">
+        <div class="modal-label">檔案名稱</div>
+        <input class="modal-input" id="modal-filename" type="text" value="output" placeholder="output">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">格式</div>
+        <div class="format-row modal-format-row">
+          <button class="fmt-btn active" id="modal-fmt-png" onclick="modalSetFmt('png')">PNG</button>
+          <button class="fmt-btn" id="modal-fmt-jpg" onclick="modalSetFmt('jpg')">JPG</button>
+        </div>
+        <div class="fmt-note modal-fmt-note" id="modal-fmt-note">&#9888; 含透明背景，已鎖定為 PNG</div>
+      </div>
+      <div class="modal-row">
+        <button class="modal-cancel" onclick="closeExportModal()">取消</button>
+        <button class="modal-confirm" onclick="confirmExport()">匯出</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/js/app.js" defer></script>
+</body>
+</html>
