@@ -1,0 +1,22 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # 每 30 分鐘自動同步一次
+  workflow_dispatch:          # 也可以手動觸發
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main            # 改成你們用的 branch 名稱
+          fetch-depth: 0
+
+      - name: Sync upstream
+        run: |
+          git remote add upstream https://github.com/sylvia-42/fc.git
+          git fetch upstream
+          git merge upstream/main --no-edit
+          git push
