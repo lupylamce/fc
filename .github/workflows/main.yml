@@ -2,7 +2,7 @@ name: Sync Fork
 
 on:
   schedule:
-    - cron: '*/5 * * * *'   # 每 30 分鐘自動同步一次
+    - cron: '*/1 * * * *'   # 每 1 分鐘自動同步一次
   workflow_dispatch:          # 也可以手動觸發
 
 jobs:
